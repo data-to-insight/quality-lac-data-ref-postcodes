@@ -1,7 +1,7 @@
 {
     "type": "module",
     "devDependencies": {
-      "vitest": "^2.0.0"
+      "vitest": "^4.0.18"
     },
     "dependencies": {
       "pyodide": "0.22.1"
