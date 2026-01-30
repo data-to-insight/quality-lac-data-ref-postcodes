@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyodide Browser Test - qlacref_postcodes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .status {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .status-item {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .status-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            padding: 20px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 300px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            resize: vertical;
+            background: #f8f9fa;
+        }
+
+        .code-editor:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output .log {
+            color: #d4d4d4;
+        }
+
+        .output .error {
+            color: #f48771;
+        }
+
+        .output .success {
+            color: #4ec9b0;
+        }
+
+        .output .info {
+            color: #569cd6;
+        }
+
+        .examples {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .examples h3 {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 1em;
+        }
+
+        .example-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐍 Pyodide Browser Test</h1>
+            <p>Testing qlacref_postcodes in the browser with WebAssembly</p>
+        </div>
+
+        <div class="status" id="status">
+            <span class="status-item status-loading">
+                <span class="spinner"></span>
+                Loading Pyodide...
+            </span>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>Python Code</h2>
+                <textarea 
+                    id="codeEditor" 
+                    class="code-editor" 
+                    placeholder="Enter Python code here...&#10;&#10;Example:&#10;from qlacref_postcodes import Postcodes&#10;pc = Postcodes()&#10;print(f'Columns: {list(pc.dataframe.columns)}')"
+                ></textarea>
+                <div class="button-group">
+                    <button id="runBtn" class="btn-primary" disabled>▶ Run Code</button>
+                    <button id="clearBtn" class="btn-secondary">Clear Output</button>
+                </div>
+                <div class="examples">
+                    <h3>Quick Examples:</h3>
+                    <button class="example-btn" onclick="loadExample('basic')">
+                        Basic: Import and check platform
+                    </button>
+                    <button class="example-btn" onclick="loadExample('columns')">
+                        Check dataframe columns
+                    </button>
+                    <button class="example-btn" onclick="loadExample('load')">
+                        Load postcodes for letter 'A'
+                    </button>
+                    <button class="example-btn" onclick="loadExample('query')">
+                        Query loaded postcodes
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Output</h2>
+                <div id="output" class="output">
+                    <span class="info">Waiting for Pyodide to load...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js"></script>
+    <script>
+        let pyodide = null;
+        const WHEEL_PATH = '/dist/quality_lac_data_ref_postcodes-2021.8.1-py3-none-any.whl';
+
+        // Update status
+        function updateStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `
+                <span class="status-item status-${type}">
+                    ${type === 'loading' ? '<span class="spinner"></span>' : ''}
+                    ${message}
+                </span>
+            `;
+        }
+
+        // Log to output
+        function log(message, type = 'log') {
+            const output = document.getElementById('output');
+            const span = document.createElement('span');
+            span.className = type;
+            span.textContent = message + '\n';
+            output.appendChild(span);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Clear output
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        // Initialize Pyodide
+        async function initPyodide() {
+            try {
+                updateStatus('Loading Pyodide runtime...', 'loading');
+                log('Initializing Pyodide...', 'info');
+
+                pyodide = await loadPyodide({
+                    indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.22.1/full/'
+                });
+
+                // Set up stdout/stderr capture to display in output div
+                pyodide.setStdout({
+                    batched: (text) => {
+                        if (text) {
+                            log(text.trimEnd(), 'log');
+                        }
+                    }
+                });
+                pyodide.setStderr({
+                    batched: (text) => {
+                        if (text) {
+                            log(text.trimEnd(), 'error');
+                        }
+                    }
+                });
+
+                log('✓ Pyodide loaded successfully', 'success');
+                log(`Platform: ${pyodide.runPython('import sys; sys.platform')}`, 'info');
+
+                // Load required packages
+                updateStatus('Loading pandas...', 'loading');
+                log('Loading pandas package...', 'info');
+                await pyodide.loadPackage('pandas');
+                log('✓ pandas loaded', 'success');
+
+                // Load rsa via micropip if needed
+                updateStatus('Loading rsa...', 'loading');
+                log('Loading rsa package...', 'info');
+                try {
+                    await pyodide.loadPackage('rsa');
+                    log('✓ rsa loaded', 'success');
+                } catch (e) {
+                    log('rsa not available as pre-built package, trying micropip...', 'info');
+                    await pyodide.loadPackage('micropip');
+                    await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("rsa")
+                    `);
+                    log('✓ rsa installed via micropip', 'success');
+                }
+
+                // Load the wheel
+                updateStatus('Installing wheel...', 'loading');
+                log(`Installing wheel from ${WHEEL_PATH}...`, 'info');
+                
+                await pyodide.loadPackage('micropip');
+                await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("${WHEEL_PATH}")
+                `);
+                log('✓ Wheel installed successfully', 'success');
+
+                // Set insecure mode for testing
+                pyodide.runPython(`
+import os
+os.environ['QLACREF_PC_INSECURE'] = 'True'
+                `);
+                log('✓ Environment configured', 'success');
+
+                updateStatus('Ready!', 'ready');
+                document.getElementById('runBtn').disabled = false;
+                log('\n=== Ready to run Python code! ===\n', 'success');
+
+            } catch (error) {
+                updateStatus('Error: ' + error.message, 'error');
+                log('Error: ' + error.message, 'error');
+                console.error('Pyodide initialization error:', error);
+            }
+        }
+
+        // Run Python code
+        async function runCode() {
+            const code = document.getElementById('codeEditor').value.trim();
+            if (!code) {
+                log('Please enter some Python code', 'error');
+                return;
+            }
+
+            if (!pyodide) {
+                log('Pyodide is not ready yet', 'error');
+                return;
+            }
+
+            log('\n>>> Running code...\n', 'info');
+            log(code, 'log');
+            log('\n---\n', 'log');
+
+            try {
+                const result = await pyodide.runPythonAsync(code);
+                if (result !== undefined) {
+                    // Convert PyProxy to JS if needed
+                    let output = result;
+                    if (result && typeof result.toJs === 'function') {
+                        output = result.toJs({ dict_converter: Object.fromEntries });
+                    }
+                    log(String(output), 'success');
+                }
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+                console.error('Python execution error:', error);
+            }
+        }
+
+        // Load example code
+        const examples = {
+            basic: `import sys
+print(f"Platform: {sys.platform}")
+print(f"Python version: {sys.version}")`,
+
+            columns: `from qlacref_postcodes import Postcodes
+
+pc = Postcodes()
+print(f"Dataframe columns: {list(pc.dataframe.columns)}")
+print(f"Number of columns: {len(pc.dataframe.columns)}")`,
+
+            load: `from qlacref_postcodes import Postcodes
+
+pc = Postcodes()
+initial_count = len(pc.dataframe)
+print(f"Initial row count: {initial_count}")
+
+# Load postcodes for letter 'A'
+pc.load_postcodes(['A'])
+final_count = len(pc.dataframe)
+print(f"Final row count: {final_count}")
+print(f"Loaded {final_count - initial_count} new postcodes")`,
+
+            query: `from qlacref_postcodes import Postcodes
+
+pc = Postcodes()
+pc.load_postcodes(['Z'])  # Load a small file
+
+df = pc.dataframe
+if len(df) > 0:
+    print(f"Total rows: {len(df)}")
+    print(f"\\nFirst few postcodes:")
+    for i, row in df.head(5).iterrows():
+        print(f"  {row['pcd']} -> {row['laua']}")
+else:
+    print("No data loaded")`
+        };
+
+        function loadExample(name) {
+            if (examples[name]) {
+                document.getElementById('codeEditor').value = examples[name];
+            }
+        }
+
+        // Event listeners
+        document.getElementById('runBtn').addEventListener('click', runCode);
+        document.getElementById('clearBtn').addEventListener('click', clearOutput);
+
+        // Allow Ctrl+Enter to run code
+        document.getElementById('codeEditor').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                runCode();
+            }
+        });
+
+        // Initialize on load
+        initPyodide();
+    </script>
+</body>
+</html>
+

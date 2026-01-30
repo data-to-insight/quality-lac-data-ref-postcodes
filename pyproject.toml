@@ -27,6 +27,12 @@ pandas = "1.0.5" # Matches pyodide version for pickle compatibility
 
 [tool.poetry.extras]
 
+[tool.poetry.group.dev.dependencies]
+flask = "<3"
+
+[tool.poetry.scripts]
+serve = "serve:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
