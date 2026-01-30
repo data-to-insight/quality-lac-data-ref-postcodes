@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "quality-lac-data-ref-postcodes"
-version = "2021.8.1"
+version = "2025.11.1.dev0"
 description = """\
 This is a redistribution of the ONS dataset on Lower Tier Local Authority to\
 Upper Tier Local Authority Lookup packaged for the Quality Lac Data project.\
@@ -19,17 +19,22 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.10,<4.0"
 msgpack = "^1.0.4"
 brotli = "^1.0.9"
+rich = { version = "^14.3.1", optional = true }
+click = { version = "^8.3.1", optional = true }
 
 [tool.poetry.extras]
+cli = ["rich", "click"]
 
 [tool.poetry.group.dev.dependencies]
 pandas = "2.3.3"
 flask = "<3"
+pre-commit = "^4.5.1"
 
 [tool.poetry.scripts]
+postcodes = "qlacref_postcodes._cli:cli"
 serve = "serve:main"
 
 [build-system]

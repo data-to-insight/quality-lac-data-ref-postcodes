@@ -2,9 +2,11 @@
 """
 Entry point for Poetry script to serve the Flask app for browser testing.
 """
+
 import sys
 import importlib.util
 from pathlib import Path
+
 
 def main():
     """Main entry point for Poetry script."""
@@ -20,6 +22,6 @@ def main():
     # Call the main function from app.py
     app_module.main()
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()

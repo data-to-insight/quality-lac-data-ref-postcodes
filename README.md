@@ -3,15 +3,15 @@
 This is a redistribution of the **ONS Postcode Directory** shaped
 to be used in the Quality Lac Data project.
 
-This repository contains PyPI and npm distributions of
-subsets of this dataset as well as the scripts to
+This repository contains PyPI distribution of a
+subset of this dataset as well as the scripts to
 generate them from source.
 
 Source: Office for National Statistics licensed under the Open Government Licence v.3.0
 
 Read more about this dataset here:
 
-* https://geoportal.statistidcs.gov.uk/datasets/ons::ons-postcode-directory-august-2021/about
+* https://geoportal.statistics.gov.uk/datasets/3635ca7f69df4733af27caf86473ffa1/about
 
 To keep distribution small, the data is stored in msgpack format
 with brotli compression. This provides efficient serialization
@@ -24,8 +24,19 @@ When a new postcode distribution is available, download it and add it to the sou
 at the same time delete the existing file from this location. There can only be one file
 in the source folder at a time.
 
-After updating the postcode sources, run the script found in `bin/generate-output-files.py` to 
-regenerate the output files for each letter of the alphabet. These end up in the 
+After updating the postcode sources, regenerate the output files using the CLI command:
+
+```bash
+python -m qlacref_postcodes generate source/ONSPD_NOV_2025.zip
+```
+
+Or if you have the CLI extra installed:
+
+```bash
+postcodes generate source/ONSPD_NOV_2025.zip
+```
+
+This will regenerate the output files for each letter of the alphabet in the 
 qlacref_postcodes directory. 
 
 Commit everything to GitHub. If ready to make a release, make sure to update the version in 
@@ -38,6 +49,39 @@ Release naming should follow a pseudo-[semantic versioning][semver] format:
 `-alpha.<number>` and `-beta.<number>`. 
 
 For example, the August 2021 release is named [2021.8][2021.8] with the associated tag [v2021.8][tag-v2021.8].
+
+### Version Resolution
+
+The package includes robust version resolution that works across different Python
+environments, including Pyodide/WASM. The version can be accessed programmatically:
+
+```python
+import qlacref_postcodes
+print(qlacref_postcodes.__version__)
+```
+
+The version resolver uses multiple fallback strategies to reliably detect the
+package version:
+1. Parses `pyproject.toml` directly (most reliable for pre-releases)
+2. Uses `importlib.metadata.version()` (standard Python environments)
+3. Iterates through installed distributions (works better in Pyodide/WASM)
+4. Falls back to "unknown" if all strategies fail
+
+**Development Versioning**: For development branches, we recommend using `.devX`
+suffixes (e.g., `2025.11.1.dev0`, `2025.11.1.dev1`). These are PEP 440 compliant
+and work seamlessly with the version resolver. The `.devX` format clearly
+indicates development versions while maintaining compatibility with package
+management tools.
+
+Example development versions:
+- `2025.11.1.dev0` - First development version for 2025.11.1
+- `2025.11.1.dev1` - Second development version
+- `2025.11.1-alpha.1` - Alpha release (for testing before final release)
+- `2025.11.1-beta.1` - Beta release
+
+The version resolver returns the exact version string as written in `pyproject.toml`,
+not the PEP 440 normalized version used in wheel filenames. This ensures consistent
+version reporting across all environments.
 
 ## Development Environment
 
@@ -62,6 +106,97 @@ To use the devcontainer:
 3. The container will build and install dependencies automatically
 
 The devcontainer uses conservative versions of build tools (pip<24, setuptools<60, wheel<0.39, Cython<3) to ensure compatibility with older numpy/pandas versions required for Pyodide compatibility.
+
+## Command Line Interface (CLI)
+
+The package includes an optional CLI for generating postcode files and searching
+postcodes. The CLI is available as an optional extra to keep the core package
+lightweight.
+
+### Installation
+
+To install with CLI support:
+
+```bash
+pip install quality-lac-data-ref-postcodes[cli]
+```
+
+Or with Poetry:
+
+```bash
+poetry install --extras cli
+```
+
+### Usage
+
+Once installed, you can use the CLI via:
+
+```bash
+python -m qlacref_postcodes <command>
+```
+
+Or if installed as a script:
+
+```bash
+postcodes <command>
+```
+
+### Available Commands
+
+#### `generate`
+
+Convert a source ZIP file to msgpack.br format files:
+
+```bash
+postcodes generate source/ONSPD_NOV_2025.zip [output_dir]
+```
+
+- `input_file`: Path to the source ZIP file (required)
+- `output_dir`: Output directory (defaults to package directory)
+
+This command:
+- Extracts and parses the CSV file from the ZIP
+- Maps source columns to expected format (pcd7→pcd, east1m→oseast1m, etc.)
+- Splits postcodes by first letter
+- Saves each letter's data as a compressed msgpack file
+
+#### `to_parquet`
+
+Convert a source ZIP file to Parquet format:
+
+```bash
+postcodes to_parquet source/ONSPD_NOV_2025.zip [output_file]
+```
+
+- `input_file`: Path to the source ZIP file (required)
+- `output_file`: Output file path (defaults to input filename with .parquet extension)
+
+#### `search`
+
+Search for postcodes interactively with formatted table output:
+
+```bash
+postcodes search "SW1A" [--data-dir /path/to/data]
+```
+
+- `partial_postcode`: Partial postcode to search for (required)
+- `--data-dir`: Optional path to data directory (defaults to package directory)
+
+The search command displays results in a formatted table with columns for
+postcode, easting, northing, and local authority code.
+
+### Example Workflow
+
+```bash
+# Generate postcode files from source
+postcodes generate source/ONSPD_NOV_2025.zip
+
+# Search for postcodes
+postcodes search "SW1A"
+
+# Convert to Parquet for other tools
+postcodes to_parquet source/ONSPD_NOV_2025.zip output.parquet
+```
 
 ## Testing in Pyodide/WASM
 

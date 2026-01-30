@@ -294,7 +294,7 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js"></script>
     <script>
         let pyodide = null;
-        const WHEEL_PATH = '/dist/quality_lac_data_ref_postcodes-2021.8.1-py3-none-any.whl';
+        const WHEEL_PATH = '/dist/{{ wheel_filename }}';
 
         // Update status
         function updateStatus(message, type = 'loading') {
@@ -433,8 +433,10 @@ await micropip.install("${WHEEL_PATH}")
         // Load example code
         const examples = {
             basic: `import sys
+import qlacref_postcodes
 print(f"Platform: {sys.platform}")
-print(f"Python version: {sys.version}")`,
+print(f"Python version: {sys.version}")
+print(f"qlacref_postcodes version: {qlacref_postcodes.__version__}")`,
 
             columns: `from qlacref_postcodes import Postcodes
 
