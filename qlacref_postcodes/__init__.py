@@ -1,4 +1,3 @@
-import hashlib
 import logging
 import os
 from typing import Iterable, Union
@@ -6,9 +5,8 @@ from typing import Iterable, Union
 import pandas as pd
 from pathlib import Path
 
-import rsa
-from rsa import VerificationError
-from rsa.key import PublicKey
+import brotli
+import msgpack
 
 logger = logging.getLogger(__name__)
 
@@ -28,54 +26,24 @@ class Postcodes:
     _read = set()
     _data_dir = Path(__file__).parent
     _df = pd.DataFrame({c: pd.Series(dtype=t) for c, t in _dtypes.items()})
-    __hashes = None
 
-    def __init__(self, pubkey: PublicKey = None, data_dir: Union[Path, str] = None):
+    def __init__(self, data_dir: Union[Path, str] = None):
         if data_dir is not None:
             self._data_dir = Path(data_dir)
         elif os.getenv('QLACREF_DATA_DIR') is not None:
             self._data_dir = Path(os.environ['QLACREF_DATA_DIR'])
 
-        if os.getenv('QLACREF_PC_INSECURE') == 'True':
-            return
-
-        if pubkey is None:
-            key = os.environ['QLACREF_PC_KEY']
-            try:
-                pubkey = rsa.PublicKey.load_pkcs1(key)
-            except ValueError:
-                pubkey = None
-
-            if pubkey is None:
-                with open(key, 'rt') as file:
-                    pubkey = rsa.PublicKey.load_pkcs1(file.read())
-
-        if pubkey is None:
-            raise Exception("No public key found, and insecure flag not set.")
-
-        with open(self._data_dir / 'hashes.sig', 'rt') as file:
-            signature = bytes.fromhex(file.read())
-
-        with open(self._data_dir / 'hashes.txt', 'rb') as file:
-            file_data = file.read()
-
-        rsa.verify(file_data, signature, pubkey)
-        file_data = file_data.decode('ascii').split('\n')
-
-        self.__hashes = {n: h for h, n in [w.split(' ') for w in file_data if len(w) > 0]}
-
     def _get_filename(self, letter):
-        return self._data_dir / f"postcodes_{letter}.pickle.gz"
+        return self._data_dir / f"postcodes_{letter}.msgpack.br"
 
-    def _read_pickle(self, letter):
+    def _read_msgpack(self, letter):
         filename = self._get_filename(letter)
         logger.debug(f"Opening {filename}")
-        if self.__hashes is not None:
-            with open(filename, 'rb') as file:
-                hash = hashlib.sha512(file.read()).hexdigest()
-                if hash != self.__hashes[filename.name]:
-                    raise VerificationError(f"Incorrect hash for {filename}")
-        return pd.read_pickle(filename)
+        with open(filename, 'rb') as file:
+            compressed = file.read()
+            unpacked = brotli.decompress(compressed)
+            data = msgpack.unpackb(unpacked, raw=False)
+            return pd.DataFrame(data["data"], columns=data["columns"])
 
     @property
     def dataframe(self):
@@ -91,7 +59,7 @@ class Postcodes:
             if letter in self._read:
                 continue
             try:
-                df = self._read_pickle(letter)
+                df = self._read_msgpack(letter)
                 logger.debug(f"Read {df.shape[0]} postcodes from {letter}")
                 dataframes.append(df)
             except (ValueError, FileNotFoundError):

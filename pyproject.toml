@@ -19,15 +19,14 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<4.0"
-rsa = ">=4.7"
-
-[tool.poetry.dev-dependencies]
-pandas = "1.0.5" # Matches pyodide version for pickle compatibility
+python = ">=3.9,<4.0"
+msgpack = "^1.0.4"
+brotli = "^1.0.9"
 
 [tool.poetry.extras]
 
 [tool.poetry.group.dev.dependencies]
+pandas = "2.3.3"
 flask = "<3"
 
 [tool.poetry.scripts]

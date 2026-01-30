@@ -357,20 +357,22 @@
                 await pyodide.loadPackage('pandas');
                 log('✓ pandas loaded', 'success');
 
-                // Load rsa via micropip if needed
-                updateStatus('Loading rsa...', 'loading');
-                log('Loading rsa package...', 'info');
+                // Load msgpack and brotli via micropip if needed
+                updateStatus('Loading msgpack and brotli...', 'loading');
+                log('Loading msgpack and brotli packages...', 'info');
                 try {
-                    await pyodide.loadPackage('rsa');
-                    log('✓ rsa loaded', 'success');
+                    await pyodide.loadPackage('msgpack');
+                    await pyodide.loadPackage('brotli');
+                    log('✓ msgpack and brotli loaded', 'success');
                 } catch (e) {
-                    log('rsa not available as pre-built package, trying micropip...', 'info');
+                    log('Packages not available as pre-built, trying micropip...', 'info');
                     await pyodide.loadPackage('micropip');
                     await pyodide.runPythonAsync(`
 import micropip
-await micropip.install("rsa")
+await micropip.install("msgpack")
+await micropip.install("brotli")
                     `);
-                    log('✓ rsa installed via micropip', 'success');
+                    log('✓ msgpack and brotli installed via micropip', 'success');
                 }
 
                 // Load the wheel
@@ -383,13 +385,6 @@ import micropip
 await micropip.install("${WHEEL_PATH}")
                 `);
                 log('✓ Wheel installed successfully', 'success');
-
-                // Set insecure mode for testing
-                pyodide.runPython(`
-import os
-os.environ['QLACREF_PC_INSECURE'] = 'True'
-                `);
-                log('✓ Environment configured', 'success');
 
                 updateStatus('Ready!', 'ready');
                 document.getElementById('runBtn').disabled = false;

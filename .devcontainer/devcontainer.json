@@ -1,5 +1,5 @@
 {
-  "name": "legacy-pyodide-parity",
+  "name": "quality-lac-data-ref-postcodes",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -19,7 +19,7 @@
       ]
     }
   },
-  "postCreateCommand": "poetry --version && poetry install",
+  "postCreateCommand": "poetry --version && poetry install && node --version && npm --version && pnpm --version",
   "remoteUser": "root"
 }
 

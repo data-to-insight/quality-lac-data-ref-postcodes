@@ -28,26 +28,25 @@ describe("qlacref_postcodes in Pyodide/WASM", () => {
     console.log("Loading pandas...");
     await pyodide.loadPackage("pandas");
     
-    console.log("Loading rsa...");
-    // Try to load rsa - it may need to be installed via micropip
+    console.log("Loading msgpack and brotli...");
+    // Try to load packages - they may need to be installed via micropip
     try {
-      await pyodide.loadPackage("rsa");
+      await pyodide.loadPackage("msgpack");
+      await pyodide.loadPackage("brotli");
     } catch (e) {
-      console.log("rsa not available as pre-built package, trying micropip...");
+      console.log("Packages not available as pre-built, trying micropip...");
       await pyodide.loadPackage("micropip");
       // Use runPythonAsync for async Python code
       await pyodide.runPythonAsync(`
 import micropip
-await micropip.install("rsa")
+await micropip.install("msgpack")
+await micropip.install("brotli")
       `);
     }
     
     console.log("Setting up qlacref_postcodes module...");
     // Copy the module to Pyodide's filesystem
-    await setupQlacrefPostcodes(pyodide, qlacrefPostcodesPath, {
-      publicKeyPath: join(__dirname, "..", "..", "id_rsa.pub"), 
-      insecure: false,
-    });
+    await setupQlacrefPostcodes(pyodide, qlacrefPostcodesPath);
     
     console.log("Setup complete!");
   });
@@ -67,7 +66,7 @@ await micropip.install("rsa")
   });
 
   it("can instantiate the Postcodes class", () => {
-    // Create an instance with insecure mode (no signature verification)
+    // Create an instance
     const code = `
 from qlacref_postcodes import Postcodes
 
@@ -159,18 +158,14 @@ result
   });
 
   it("verifies all required dependencies are available", () => {
-    const code = `
-import sys
-deps = ['pandas', 'rsa', 'hashlib', 'pathlib']
-available = [dep for dep in deps if dep in sys.modules or __import__(dep) is not None]
-len(available) == len(deps)
-    `;
-    // Note: This might not work perfectly, but let's check what we can
+    // Check that required packages can be imported
     const hasPandas = runPythonCode(pyodide, "import pandas; True");
-    const hasRsa = runPythonCode(pyodide, "import rsa; True");
+    const hasMsgpack = runPythonCode(pyodide, "import msgpack; True");
+    const hasBrotli = runPythonCode(pyodide, "import brotli; True");
     
     expect(hasPandas).toBe(true);
-    expect(hasRsa).toBe(true);
+    expect(hasMsgpack).toBe(true);
+    expect(hasBrotli).toBe(true);
   });
 });
 

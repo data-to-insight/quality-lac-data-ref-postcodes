@@ -13,18 +13,10 @@ Read more about this dataset here:
 
 * https://geoportal.statistidcs.gov.uk/datasets/ons::ons-postcode-directory-august-2021/about
 
-To keep distribution small, only pickled dataframes compatible 
-with pandas 1.0.5 are included. This will hopefully change
-once we figure out how to do different versions as extras.
-
-As pickle is inherently unsafe, the SHA-512 checksum for each file
-is included in [hashes.txt](qlacref_postcodes/hashes.txt). This
-file is signed with [this key](./id_rsa.pub). 
-
-When downloading from PyPI, specify the environment variable
-`QLACREF_PC_KEY` to either be the public key itself, or a path
-to where it can be loaded from. The checksums are then verified
-and each file checked before unpickling. 
+To keep distribution small, the data is stored in msgpack format
+with brotli compression. This provides efficient serialization
+without the security concerns and version coupling issues associated
+with pickle. 
 
 ## Regular updates
 
@@ -34,10 +26,7 @@ in the source folder at a time.
 
 After updating the postcode sources, run the script found in `bin/generate-output-files.py` to 
 regenerate the output files for each letter of the alphabet. These end up in the 
-qlacref_postcodes directory.
-
-To sign the postcodes, you need the distribution private key. Run the script `bin/sign-files.py` to
-create the signed checksum file. 
+qlacref_postcodes directory. 
 
 Commit everything to GitHub. If ready to make a release, make sure to update the version in 
 [pyproject.toml](./pyproject.toml), push to GitHub and then create a GitHub release. The 
@@ -129,7 +118,7 @@ The page includes example scripts:
 - **Load**: Load postcodes for a specific letter
 - **Query**: Query and display loaded postcode data
 
-**Note**: The browser example uses insecure mode for testing (no signature verification). The `QLACREF_PC_INSECURE` environment variable is set to `'True'` automatically.
+**Note**: The browser example automatically installs required packages (msgpack, brotli) via Pyodide's package system.
 
 ### Node.js Example
 
@@ -166,7 +155,7 @@ The Node.js example:
 - Uses Vitest as the test runner
 - Creates a Pyodide instance configured for Node.js
 - Copies the `qlacref_postcodes` module to Pyodide's virtual filesystem
-- Loads required packages (pandas, rsa) via Pyodide's package system
+- Loads required packages (pandas, msgpack, brotli) via Pyodide's package system
 - Verifies WASM execution by checking `sys.platform == "emscripten"`
 
 The test helper (`pyodide-test-helper.js`) provides utilities:
@@ -208,7 +197,7 @@ Both examples verify that code is running in WASM by checking `sys.platform == "
 - Verify the wheel path in `index.html` matches your actual wheel filename
 
 **Module import errors**:
-- Make sure all dependencies (pandas, rsa) are loading correctly
+- Make sure all dependencies (pandas, msgpack, brotli) are loading correctly
 - Check the browser console for detailed error messages
 
 #### Node.js Example

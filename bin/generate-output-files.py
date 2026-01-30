@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import hashlib
-
 import pandas as pd
 import logging
 import re
 import sys
+
+import msgpack
+import brotli
 
 from pathlib import Path
 from zipfile import ZipFile
@@ -42,10 +43,21 @@ def main(input_file=None):
     for letter in df['first_letter'].unique():
         letter_codes = df[df.first_letter == letter]
         del letter_codes['first_letter']
-        print(f"Writing {letter_codes.shape[0]} entries for the letter {letter}.")
+        print(f"Writing {letter_codes.shape[0]} entries for the letter {letter}. ", end="", flush=True)
 
-        zip_filename = root_dir / f"qlacref_postcodes/postcodes_{letter}.pickle.gz"
-        letter_codes.to_pickle(zip_filename)
+        filename = root_dir / f"qlacref_postcodes/postcodes_{letter}.msgpack.br"
+        # Convert dataframe to dict format for msgpack
+        data = {
+            "columns": list(letter_codes.columns),
+            "data":  letter_codes.to_dict(orient="list"),
+        }
+        # Serialize with msgpack and compress with brotli
+        packed = msgpack.packb(data, use_bin_type=True)
+        compressed = brotli.compress(packed)
+        with open(filename, 'wb') as f:
+            f.write(compressed)
+        size = filename.stat().st_size
+        print(f"{size / 1024:.2f} KB \u2705", flush=True)
 
 
 if __name__ == "__main__":

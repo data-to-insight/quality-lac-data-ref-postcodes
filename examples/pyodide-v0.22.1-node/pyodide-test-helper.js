@@ -150,14 +150,11 @@ os.makedirs(os.path.dirname('${targetPath}'), exist_ok=True)
  * Sets up the qlacref_postcodes module in Pyodide
  * @param {Pyodide} pyodide - The Pyodide instance
  * @param {string} sourceDir - Path to the qlacref_postcodes directory
- * @param {Object} options - Options for setup
- * @param {boolean} options.insecure - Skip signature verification (default: true for testing)
- * @param {string} options.publicKeyPath - Path to public key file (optional)
+ * @param {Object} options - Options for setup (currently unused, kept for compatibility)
  * @returns {Promise} A promise that resolves when setup is complete
  */
 export async function setupQlacrefPostcodes(pyodide, sourceDir, options = {}) {
   const path = await import("path");
-  const { insecure = true, publicKeyPath = null } = options;
   
   // Copy the module directory to Pyodide's filesystem
   const targetDir = await copyDirectoryToPyodide(pyodide, sourceDir);
@@ -168,25 +165,6 @@ export async function setupQlacrefPostcodes(pyodide, sourceDir, options = {}) {
 import sys
 sys.path.insert(0, '${parentDir}')
   `);
-  
-  // Set environment variables for testing
-  if (insecure) {
-    pyodide.runPython(`
-import os
-os.environ['QLACREF_PC_INSECURE'] = 'True'
-    `);
-  } else if (publicKeyPath) {
-    const fs = await import("fs/promises");
-    const keyContent = await fs.readFile(publicKeyPath, "utf-8");
-    // Copy key to Pyodide filesystem
-    const keyPath = "/tmp/id_rsa.pub";
-    pyodide.FS.writeFile(keyPath, new TextEncoder().encode(keyContent));
-    
-    pyodide.runPython(`
-import os
-os.environ['QLACREF_PC_KEY'] = '${keyPath}'
-    `);
-  }
   
   return targetDir;
 }
