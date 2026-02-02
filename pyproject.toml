@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "quality-lac-data-ref-postcodes"
-version = "2025.11.1.dev0"
+version = "2025.11.1"
 description = """\
 This is a redistribution of the ONS dataset on Lower Tier Local Authority to\
 Upper Tier Local Authority Lookup packaged for the Quality Lac Data project.\
