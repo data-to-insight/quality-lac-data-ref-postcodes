@@ -83,6 +83,19 @@ The version resolver returns the exact version string as written in `pyproject.t
 not the PEP 440 normalized version used in wheel filenames. This ensures consistent
 version reporting across all environments.
 
+### Regular updates: quick guide
+- Ensure you are on the quality-lac-data-ref-postcodes project on PyPi
+- Ensure you have a PyPi API token for the project
+- Use pip to install poetry and poetry-plugin-shell, then access the shell
+- Upload the latest postcode data and use the CLI to build the new database
+- Bump the version number in pyproject.toml using the guide above
+- Commit and tag the release (git commit and git tag <tagname>)
+- Run 'poetry build'
+- Run pyodide tests using: python examples/pyodide-v0.22.1-browser/app.py and run tests
+- Add your PyPi token using: poetry config pypi-token.pypi <api-tag>
+- Run poetry publish to publish to PyPi
+- Bump the version number in pyprojects.toml to the next dev version
+
 ## Development Environment
 
 This project includes a VS Code devcontainer configuration for a consistent development environment.
