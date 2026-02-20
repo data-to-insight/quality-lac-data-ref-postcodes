@@ -30,7 +30,7 @@ cli = ["rich", "click"]
 
 [tool.poetry.group.dev.dependencies]
 pandas = "2.3.3"
-flask = "<3"
+flask = "<4"
 pre-commit = "^4.5.1"
 
 [tool.poetry.scripts]
